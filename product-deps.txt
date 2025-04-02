@@ -1,0 +1,30 @@
+334AD1C02D8B987600E12356 /* CryptoSwift */ = {
+isa = XCSwiftPackageProductDependency;
+package = 334AD1B02D8B987600E12346 /* XCRemoteSwiftPackageReference "CryptoSwift" */;
+productName = CryptoSwift;
+};
+334AD1C12D8B987600E12357 /* SnapKit */ = {
+isa = XCSwiftPackageProductDependency;
+package = 334AD1B12D8B987600E12347 /* XCRemoteSwiftPackageReference "SnapKit" */;
+productName = SnapKit;
+};
+334AD1C22D8B987600E12358 /* Lottie */ = {
+isa = XCSwiftPackageProductDependency;
+package = 334AD1B22D8B987600E12348 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+productName = Lottie;
+};
+334AD1C32D8B987600E12359 /* SwiftUIX */ = {
+isa = XCSwiftPackageProductDependency;
+package = 334AD1B32D8B987600E12349 /* XCRemoteSwiftPackageReference "SwiftUIX" */;
+productName = SwiftUIX;
+};
+334AD1C42D8B987600E1235A /* Moya */ = {
+isa = XCSwiftPackageProductDependency;
+package = 334AD1B42D8B987600E1234A /* XCRemoteSwiftPackageReference "Moya" */;
+productName = Moya;
+};
+334AD1C52D8B987600E1235B /* RswiftLibrary */ = {
+isa = XCSwiftPackageProductDependency;
+package = 334AD1B52D8B987600E1234B /* XCRemoteSwiftPackageReference "R-swift" */;
+productName = RswiftLibrary;
+};
