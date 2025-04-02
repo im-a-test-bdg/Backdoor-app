@@ -264,8 +264,8 @@ final class CoreMLManager {
             switch feature.type {
             case .string:
                 // If output is a string, it's likely a classification label (intent)
-                if let value = feature.stringValue {
-                    intent = value
+                if let stringValue = feature.stringValue, !stringValue.isEmpty {
+                    intent = stringValue
                 }
                 
             case .dictionary:
@@ -289,7 +289,8 @@ final class CoreMLManager {
                     
                     for i in 0..<count {
                         let index = i
-                        if let value = multiArray[index].doubleValue {
+                        let value = multiArray[index].doubleValue
+                        if value != 0 { // Assuming 0 means no value, adjust as needed
                             probabilities["class_\(i)"] = value
                             
                             // Track highest confidence
@@ -444,9 +445,9 @@ final class CoreMLManager {
                 for featureName in prediction.featureNames {
                     guard let feature = prediction.featureValue(for: featureName) else { continue }
                     
-                    if let value = feature.stringValue, ["positive", "negative", "neutral"].contains(value.lowercased()) {
+                    if let stringValue = feature.stringValue, ["positive", "negative", "neutral"].contains(stringValue.lowercased()) {
                         // Direct sentiment classification
-                        sentiment = SentimentType(rawValue: value.lowercased()) ?? .neutral
+                        sentiment = SentimentType(rawValue: stringValue.lowercased()) ?? .neutral
                         score = sentiment == .neutral ? 0.5 : (sentiment == .positive ? 0.75 : 0.25)
                     } else if let value = feature.dictionaryValue as? [String: Double] {
                         // Probabilities for each sentiment
