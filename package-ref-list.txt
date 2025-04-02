@@ -1,6 +1,0 @@
-334AD1B02D8B987600E12346 /* XCRemoteSwiftPackageReference "CryptoSwift" */,
-334AD1B12D8B987600E12347 /* XCRemoteSwiftPackageReference "SnapKit" */,
-334AD1B22D8B987600E12348 /* XCRemoteSwiftPackageReference "lottie-spm" */,
-334AD1B32D8B987600E12349 /* XCRemoteSwiftPackageReference "SwiftUIX" */,
-334AD1B42D8B987600E1234A /* XCRemoteSwiftPackageReference "Moya" */,
-334AD1B52D8B987600E1234B /* XCRemoteSwiftPackageReference "R-swift" */,
