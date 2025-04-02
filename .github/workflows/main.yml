@@ -13,16 +13,16 @@ name: Download and Upload Backdoor-App
        
      - name: Download ZIP file
        run: |
-         curl -L -o V3-main.zip "https://github.com/magic-bdg/V3/archive/refs/heads/main.zip"
+         curl -L -o Backdoor-v5-main.zip "https://github.com/Backdoor-v5/Backdoor-v5/archive/refs/heads/main.zip"
          
      - name: Unzip the file
        run: |
-         unzip V3-main.zip
+         unzip Backdoor-v5-main.zip
          
      - name: Move contents to root
        run: |
-         mv V3-main/* .
-         rm -rf V3-main V3-main.zip
+         mv Backdoor-v5-main/* .
+         rm -rf Backdoor-v5-main Backdoor-v5-main.zip
          
      - name: Commit and Push changes
        run: |
