@@ -621,7 +621,7 @@ extension UIViewController {
     /// Applies the current theme to the view controller
     func applyTheme() {
         let theme = ThemeManager.shared
-        let interfaceStyle = traitCollection.userInterfaceStyle
+        _ = traitCollection.userInterfaceStyle
         
         // Apply theme colors
         view.backgroundColor = theme.backgroundColor(for: traitCollection)
