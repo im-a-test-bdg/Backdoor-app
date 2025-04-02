@@ -231,7 +231,8 @@ final class ThemeManager {
     
     /// Updates the system theme based on current device settings
     private func updateSystemTheme() {
-        let userInterfaceStyle = UITraitCollection.current.userInterfaceStyle
+        // Use current trait collection's user interface style
+        let isDarkMode = UITraitCollection.current.userInterfaceStyle == .dark
         
         // Create updated system theme
         let updatedSystemTheme = AppTheme(
@@ -241,10 +242,10 @@ final class ThemeManager {
             primaryColor: .systemBlue,
             secondaryColor: .systemIndigo,
             accentColor: .systemOrange,
-            backgroundColor: userInterfaceStyle == .dark ? .systemBackground : .systemBackground,
-            cardColor: userInterfaceStyle == .dark ? .secondarySystemBackground : .secondarySystemBackground,
-            textColor: userInterfaceStyle == .dark ? .label : .label,
-            secondaryTextColor: userInterfaceStyle == .dark ? .secondaryLabel : .secondaryLabel
+            backgroundColor: isDarkMode ? .systemBackground : .systemBackground,
+            cardColor: isDarkMode ? .secondarySystemBackground : .secondarySystemBackground,
+            textColor: isDarkMode ? .label : .label,
+            secondaryTextColor: isDarkMode ? .secondaryLabel : .secondaryLabel
         )
         
         // Update system theme in themes array

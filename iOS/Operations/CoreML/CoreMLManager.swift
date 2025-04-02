@@ -289,7 +289,7 @@ final class CoreMLManager {
                     
                     for i in 0..<count {
                         let index = i
-                        if let value = try? multiArray[index].doubleValue {
+                        if let value = multiArray[index].doubleValue {
                             probabilities["class_\(i)"] = value
                             
                             // Track highest confidence
