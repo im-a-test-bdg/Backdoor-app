@@ -32,4 +32,4 @@ jobs:
         git commit -m "Sync Backdoor-App files from source repo"
         git push --force
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.TRANSFER_SECRET }}
