@@ -11,22 +11,27 @@
 #define JSON_INCLUDED
 
 #ifdef _WIN32
-
-typedef signed char int8_t;
-typedef short int int16_t;
-typedef int int32_t;
-typedef long long int int64_t;
-typedef unsigned char uint8_t;
-typedef unsigned short int uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long int uint64_t;
-
+    #include <stdlib.h>
+    #include <string.h>
+    // Use Windows-specific headers for integer types if stdint.h not available
+    #if !defined(_MSC_VER) || _MSC_VER >= 1600
+        #include <stdint.h>
+    #else
+        // Older Visual Studio versions without stdint.h
+        typedef signed char int8_t;
+        typedef short int int16_t;
+        typedef int int32_t;
+        typedef long long int int64_t;
+        typedef unsigned char uint8_t;
+        typedef unsigned short int uint16_t;
+        typedef unsigned int uint32_t;
+        typedef unsigned long long int uint64_t;
+    #endif
 #else
-
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
+    // Non-Windows platforms
+    #include <stdint.h>
+    #include <stdlib.h>
+    #include <string.h>
 #endif
 
 #include <algorithm>
@@ -34,7 +39,6 @@ typedef unsigned long long int uint64_t;
 #include <limits>
 #include <map>
 #include <queue>
-#include <string.h>
 #include <string>
 #include <vector>
 using namespace std;
