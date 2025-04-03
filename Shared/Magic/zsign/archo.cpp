@@ -12,7 +12,7 @@
 #include "common/json.h"
 #include "signing.h"
 
-                static uint64_t execSegLimit = 0;
+static uint64_t execSegLimit = 0;
 
 ZArchO::ZArchO() {
     m_pBase = NULL;
