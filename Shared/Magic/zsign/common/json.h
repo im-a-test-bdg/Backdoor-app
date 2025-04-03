@@ -10,28 +10,41 @@
 #ifndef JSON_INCLUDED
 #define JSON_INCLUDED
 
+// Basic system headers
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>  // Standard integer types
+
 #ifdef _WIN32
-    #include <stdlib.h>
-    #include <string.h>
-    // Use Windows-specific headers for integer types if stdint.h not available
-    #if !defined(_MSC_VER) || _MSC_VER >= 1600
-        #include <stdint.h>
-    #else
-        // Older Visual Studio versions without stdint.h
-        typedef signed char int8_t;
-        typedef short int int16_t;
-        typedef int int32_t;
-        typedef long long int int64_t;
-        typedef unsigned char uint8_t;
-        typedef unsigned short int uint16_t;
-        typedef unsigned int uint32_t;
-        typedef unsigned long long int uint64_t;
+    // Additional Windows-specific headers if needed
+    #if defined(_MSC_VER) && _MSC_VER < 1600
+        // Only define these for really old Visual Studio versions without stdint.h
+        // We check that they're not already defined to avoid conflicts
+        #ifndef int8_t
+            typedef signed char int8_t;
+        #endif
+        #ifndef int16_t
+            typedef short int int16_t;
+        #endif
+        #ifndef int32_t
+            typedef int int32_t;
+        #endif
+        #ifndef int64_t
+            typedef long long int int64_t;
+        #endif
+        #ifndef uint8_t
+            typedef unsigned char uint8_t;
+        #endif
+        #ifndef uint16_t
+            typedef unsigned short int uint16_t;
+        #endif
+        #ifndef uint32_t
+            typedef unsigned int uint32_t;
+        #endif
+        #ifndef uint64_t
+            typedef unsigned long long int uint64_t;
+        #endif
     #endif
-#else
-    // Non-Windows platforms
-    #include <stdint.h>
-    #include <stdlib.h>
-    #include <string.h>
 #endif
 
 #include <algorithm>
