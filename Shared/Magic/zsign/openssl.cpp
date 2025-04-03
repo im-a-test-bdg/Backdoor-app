@@ -18,7 +18,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
 
-                class COpenSSLInit {
+class COpenSSLInit {
 public:
     COpenSSLInit() {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
