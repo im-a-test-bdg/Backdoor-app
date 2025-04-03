@@ -1,0 +1,67 @@
+name: Download Model from Dropbox and Create Pull Request
+
+on:
+  push:
+    branches:
+      - main  # Change to the branch you're using if different
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Git LFS
+      run: |
+        git lfs install  # Install Git LFS
+
+    - name: Download model from Dropbox
+      run: |
+        start_time=$(date +%s)  # Record start time
+
+        # Create model directory if it doesn't exist
+        mkdir -p model  # Create the model directory
+        
+        # Download the model from Dropbox using curl
+        curl -L -o model/coreml_model.mlmodel \
+          "https://www.dropbox.com/scl/fi/2xarhyii46tr9amkqh764/coreml_model.mlmodel?rlkey=j3cxmpjhxj8bbwzw11j1hy54c&st=zuyjx83u&dl=1" 
+        
+        end_time=$(date +%s)  # Record end time
+        duration=$((end_time - start_time))  # Calculate duration
+        echo "Model download time: $duration seconds"
+
+    - name: Move model to repository and create new branch
+      run: |
+        start_time=$(date +%s)  # Record start time
+        
+        # Track the new model file with Git LFS
+        git lfs track "model/coreml_model.mlmodel"  # Track the file with Git LFS
+        git add .gitattributes model/coreml_model.mlmodel  # Add the .gitattributes and model file
+
+        # Set up Git configuration
+        git config --local user.email "actions@github.com"  # Use a generic actions email
+        git config --local user.name "GitHub Actions"  # Use a generic actions user
+
+        # Create a new branch
+        git checkout -b update-model  # Create a new branch
+
+        # Commit the changes
+        git commit -m "Add coreml_model.mlmodel using Git LFS"  # Commit the file
+
+        # Push the branch to GitHub
+        git push --set-upstream origin update-model  # Push the branch to GitHub
+        
+        end_time=$(date +%s)  # Record end time
+        duration=$((end_time - start_time))  # Calculate duration
+        echo "Move and commit time: $duration seconds"
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        title: "Add coreml_model.mlmodel from Dropbox"
+        body: "This pull request adds the model downloaded from Dropbox."
+        head: update-model
+        base: main  # Change to the base branch you want to merge into
+        token: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub's default token
