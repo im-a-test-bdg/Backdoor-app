@@ -61,10 +61,108 @@ final class CoreMLManager {
         return modelDir
     }
     
-    /// Load the CoreML model asynchronously
+    // Model loading state tracking
+    private var isModelLoading = false
+    private var hasShownDeferredNotification = false
+    
+    /// Load the CoreML model asynchronously with safeguards
     func loadModel(completion: ((Bool) -> Void)? = nil) {
+        // Skip in safe mode
+        if SafeModeLauncher.shared.inSafeMode {
+            Debug.shared.log(message: "CoreML model loading skipped in safe mode", type: .info)
+            completion?(false)
+            return
+        }
+        
+        // Check memory status before attempting to load large model
+        if shouldCheckMemory() && isMemoryConstrained() {
+            Debug.shared.log(message: "Memory pressure detected - deferring CoreML model loading", type: .warning)
+            notifyUserOfDeferredLoading()
+            completion?(false)
+            return
+        }
+        
+        // Prevent duplicate loading attempts
+        if isModelLoading {
+            Debug.shared.log(message: "Model loading already in progress", type: .info)
+            completion?(false)
+            return
+        }
+        
+        // Mark loading as in progress
+        isModelLoading = true
+        
         // Call the enhanced version that checks for locally trained models
-        loadModelWithLocalLearning(completion: completion)
+        loadModelWithLocalLearning { [weak self] success in
+            self?.isModelLoading = false
+            completion?(success)
+        }
+    }
+    
+    /// Check if memory is constrained
+    private func isMemoryConstrained() -> Bool {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
+        
+        let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+        
+        if kerr == KERN_SUCCESS {
+            let usedMemory = Double(info.resident_size)
+            let totalMemory = Double(ProcessInfo.processInfo.physicalMemory)
+            let memoryUsage = usedMemory / totalMemory
+            
+            Debug.shared.log(message: "Memory usage: \(Int(memoryUsage * 100))%", type: .info)
+            
+            return memoryUsage > 0.7 // If using more than 70% of memory
+        } else {
+            // Log error for debugging purposes
+            Debug.shared.log(message: "Failed to get memory info: error \(kerr)", type: .error)
+            
+            // Default to true (memory is constrained) to be cautious when we can't determine
+            return true
+        }
+    }
+    
+    /// Determine if we should check memory at all (performance optimization)
+    private func shouldCheckMemory() -> Bool {
+        // Only check memory on devices that might be constrained
+        let totalMemory = ProcessInfo.processInfo.physicalMemory
+        let totalMemoryGB = Double(totalMemory) / 1024.0 / 1024.0 / 1024.0
+        
+        // Debug log total device memory
+        Debug.shared.log(message: "Device has \(String(format: "%.1f", totalMemoryGB)) GB RAM", type: .info)
+        
+        // Always check if device has less than 3GB RAM
+        return totalMemoryGB < 3.0
+    }
+    
+    /// Notify user that AI features are deferred
+    private func notifyUserOfDeferredLoading() {
+        // Only show once per session
+        if hasShownDeferredNotification {
+            return
+        }
+        
+        hasShownDeferredNotification = true
+        
+        DispatchQueue.main.async {
+            // Find top view controller using the shared extension method
+            if let topVC = UIApplication.shared.topMostViewController() {
+                let alert = UIAlertController(
+                    title: "AI Features Delayed",
+                    message: "AI features will be available when system resources allow. You can continue using other app features.",
+                    preferredStyle: .alert
+                )
+                
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                
+                topVC.present(alert, animated: true)
+            }
+        }
     }
     
     /// Load the CoreML model with local learning support
@@ -120,22 +218,134 @@ final class CoreMLManager {
         }
     }
     
-    /// Load model from the specified URL
+    /// Load model from the specified URL with memory safety and progress indication
     private func loadModelFromURL(_ url: URL, completion: ((Bool) -> Void)? = nil) {
+        // Show loading indicator for large files after a small delay
+        var loadingAlert: UIAlertController?
+        var loadingAlertPresented = false
+        
+        // Only show UI after a brief delay if loading is still ongoing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) { [weak self] in
+            if self?.isModelLoading == true {
+                // Find appropriate view controller to present on
+                // Using the shared extension method to find top view controller
+                guard let topVC = UIApplication.shared.topMostViewController() else {
+                    return
+                }
+                
+                // Don't interrupt if user is already looking at something
+                if topVC.presentedViewController != nil {
+                    return
+                }
+                
+                // Create alert with progress indicator
+                loadingAlert = UIAlertController(
+                    title: "Loading AI Model",
+                    message: "Please wait while AI features are prepared...",
+                    preferredStyle: .alert
+                )
+                
+                // Add activity indicator
+                let indicator = UIActivityIndicatorView(style: .medium)
+                indicator.translatesAutoresizingMaskIntoConstraints = false
+                loadingAlert?.view.addSubview(indicator)
+                indicator.startAnimating()
+                
+                // Position indicator
+                NSLayoutConstraint.activate([
+                    indicator.centerXAnchor.constraint(equalTo: loadingAlert!.view.centerXAnchor),
+                    indicator.topAnchor.constraint(equalTo: loadingAlert!.view.topAnchor, constant: 80),
+                    indicator.widthAnchor.constraint(equalToConstant: 40),
+                    indicator.heightAnchor.constraint(equalToConstant: 40)
+                ])
+                
+                // Add cancel button
+                loadingAlert?.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+                    self?.isModelLoading = false
+                    completion?(false)
+                })
+                
+                if let alert = loadingAlert {
+                    topVC.present(alert, animated: true)
+                    loadingAlertPresented = true
+                }
+            }
+        }
+        
+        // Set up memory pressure observer
+        var memoryObserver: NSObjectProtocol?
+        memoryObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+                Debug.shared.log(message: "Memory warning during model loading, canceling", type: .warning)
+                
+                // Clean up - ensure UI operations happen on main thread
+                if loadingAlertPresented {
+                    DispatchQueue.main.async {
+                        loadingAlert?.dismiss(animated: true)
+                    }
+                }
+                
+                if let observer = memoryObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+                
+                self?.isModelLoading = false
+                completion?(false)
+            }
+        
+        // Perform actual loading in background
         predictionQueue.async { [weak self] in
             do {
+                // Check file size before loading
+                do {
+                    let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+                    if let fileSize = attributes[.size] as? NSNumber {
+                        let fileSizeMB = Double(truncating: fileSize) / 1024.0 / 1024.0
+                        Debug.shared.log(message: "Model file size: \(String(format: "%.1f", fileSizeMB)) MB", type: .info)
+                        
+                        // Extra warning for very large models
+                        if fileSizeMB > 300 {
+                            Debug.shared.log(message: "Warning: Very large model file, performance may be affected", type: .warning)
+                        }
+                    }
+                } catch {
+                    Debug.shared.log(message: "Could not determine model file size", type: .warning)
+                }
+                
+                // Actual model loading
                 let compiledModelURL = try MLModel.compileModel(at: url)
                 let model = try MLModel(contentsOf: compiledModelURL)
                 
-                // Update state on main thread
+                // Remove observer as loading succeeded
+                if let observer = memoryObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+                
+                // Dismiss loading alert
                 DispatchQueue.main.async {
+                    if loadingAlertPresented {
+                        loadingAlert?.dismiss(animated: true)
+                    }
+                    
                     self?.mlModel = model
                     self?.modelLoaded = true
                     Debug.shared.log(message: "CoreML model loaded successfully from: \(url.path)", type: .info)
                     completion?(true)
                 }
             } catch {
+                // Remove observer on failure
+                if let observer = memoryObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+                
+                // Dismiss loading alert
                 DispatchQueue.main.async {
+                    if loadingAlertPresented {
+                        loadingAlert?.dismiss(animated: true)
+                    }
+                    
                     Debug.shared.log(message: "Failed to load CoreML model: \(error)", type: .error)
                     completion?(false)
                 }
