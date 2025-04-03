@@ -38,9 +38,30 @@ final class ThemeManager {
     // MARK: - Initialization
     
     private init() {
-        // Initialize with system theme or saved theme
+        // Set up themes before initializing currentTheme
         let savedThemeId = UserDefaults.standard.string(forKey: "selectedThemeId") ?? ThemeType.system.rawValue
-        currentTheme = themes.first(where: { $0.id == savedThemeId }) ?? systemTheme
+        
+        // Initialize with system theme as a temporary value
+        let systemThemeTemp = AppTheme(
+            id: ThemeType.system.rawValue,
+            name: "System",
+            type: .system,
+            primaryColor: .systemBlue,
+            secondaryColor: .systemIndigo,
+            accentColor: .systemOrange,
+            backgroundColor: UIColor { $0.userInterfaceStyle == .dark ? .systemBackground : .systemBackground },
+            cardColor: UIColor { $0.userInterfaceStyle == .dark ? .secondarySystemBackground : .secondarySystemBackground },
+            textColor: UIColor { $0.userInterfaceStyle == .dark ? .label : .label },
+            secondaryTextColor: UIColor { $0.userInterfaceStyle == .dark ? .secondaryLabel : .secondaryLabel }
+        )
+        
+        // Initialize current theme
+        currentTheme = systemThemeTemp
+        
+        // Now update with the correct theme after themes array is initialized
+        if let selectedTheme = themes.first(where: { $0.id == savedThemeId }) {
+            currentTheme = selectedTheme
+        }
         
         // Load accessibility settings
         loadAccessibilitySettings()

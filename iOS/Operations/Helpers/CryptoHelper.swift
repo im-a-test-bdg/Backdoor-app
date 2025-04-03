@@ -159,24 +159,25 @@ class CryptoHelper {
             return nil
         }
         
-        var derivedKeyData = Data(count: keyLength)
+        // Create a temporary buffer to avoid overlapping access
+        var keyBuffer = [UInt8](repeating: 0, count: keyLength)
         
-        let result = derivedKeyData.withUnsafeMutableBytes { derivedKeyBytes -> Int32 in
-            return saltData.withUnsafeBytes { saltBytes -> Int32 in
-                return passwordData.withUnsafeBytes { passwordBytes -> Int32 in
-                    CCKeyDerivationPBKDF(
-                        CCPBKDFAlgorithm(kCCPBKDF2),
-                        passwordBytes.baseAddress, passwordData.count,
-                        saltBytes.baseAddress, saltData.count,
-                        CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                        UInt32(iterations),
-                        derivedKeyBytes.baseAddress, derivedKeyData.count
-                    )
-                }
+        // Call PBKDF2 function with temporary buffer
+        let result = saltData.withUnsafeBytes { saltBytes in
+            passwordData.withUnsafeBytes { passwordBytes in
+                CCKeyDerivationPBKDF(
+                    CCPBKDFAlgorithm(kCCPBKDF2),
+                    passwordBytes.baseAddress, passwordData.count,
+                    saltBytes.baseAddress, saltData.count,
+                    CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
+                    UInt32(iterations),
+                    &keyBuffer, keyLength
+                )
             }
         }
         
-        return result == kCCSuccess ? derivedKeyData : nil
+        // Convert buffer to Data only if successful
+        return result == kCCSuccess ? Data(keyBuffer) : nil
     }
     
     // MARK: - Hashing Methods
