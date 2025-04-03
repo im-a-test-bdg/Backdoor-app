@@ -511,7 +511,10 @@ class AILearningManager {
             // Create data table for CreateML
             let textInputColumn = MLDataColumn(textInput)
             let intentOutputColumn = MLDataColumn(intentOutput)
-            let dataTable: MLDataTable = try MLDataTable(dictionary: ["text": textInputColumn, "label": intentOutputColumn])
+            
+            // Create dictionary with explicit type to avoid ambiguity
+            let dataDict: [String: MLDataColumn] = ["text": textInputColumn, "label": intentOutputColumn]
+            let dataTable = try MLDataTable(dictionary: dataDict)
             
             // Train model with simplified approach
             let textClassifier = try MLTextClassifier(
