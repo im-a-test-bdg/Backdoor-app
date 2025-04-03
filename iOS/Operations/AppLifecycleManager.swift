@@ -508,13 +508,13 @@ final class AppLifecycleManager {
             if let name = operation["name"] as? String {
                 var taskId: UIBackgroundTaskIdentifier = .invalid
                 
-                taskId = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self] in
+                taskId = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self, taskId] in
                     guard let self = self else { return }
                     
                     // Save operation state before expiration
                     self.saveOperationState(for: name)
                     
-                    // End the task
+                    // End the task using local captured taskId
                     if taskId != .invalid {
                         UIApplication.shared.endBackgroundTask(taskId)
                         self.backgroundTasks.removeValue(forKey: taskId)
