@@ -1,6 +1,0 @@
-334AD1D02D8B987600E12366 /* CryptoSwift in Frameworks */,
-334AD1D12D8B987600E12367 /* SnapKit in Frameworks */,
-334AD1D22D8B987600E12368 /* Lottie in Frameworks */,
-334AD1D32D8B987600E12369 /* SwiftUIX in Frameworks */,
-334AD1D42D8B987600E1236A /* Moya in Frameworks */,
-334AD1D52D8B987600E1236B /* RswiftLibrary in Frameworks */,
