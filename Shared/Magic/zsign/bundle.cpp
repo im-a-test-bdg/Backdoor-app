@@ -303,8 +303,21 @@ bool ZAppBundle::SignNode(JValue &jvNode) {
     string strFolder = jvNode["path"];
     string strBundleId = jvNode["bid"];
     string strBundleExe = jvNode["exec"];
-    b64.Decode(jvNode["sha1"].asCString(), strInfoPlistSHA1);
-    b64.Decode(jvNode["sha2"].asCString(), strInfoPlistSHA256);
+
+    // Decode SHA1 hash
+    int outLen1 = 0;
+    const char* sha1Decoded = b64.Decode(jvNode["sha1"].asCString(), strlen(jvNode["sha1"].asCString()), &outLen1);
+    if (sha1Decoded != nullptr) {
+        strInfoPlistSHA1.assign(sha1Decoded, outLen1);
+    }
+
+    // Decode SHA256 hash
+    int outLen2 = 0;
+    const char* sha2Decoded = b64.Decode(jvNode["sha2"].asCString(), strlen(jvNode["sha2"].asCString()), &outLen2);
+    if (sha2Decoded != nullptr) {
+        strInfoPlistSHA256.assign(sha2Decoded, outLen2);
+    }
+
     if (strBundleId.empty() || strBundleExe.empty() || strInfoPlistSHA1.empty() || strInfoPlistSHA256.empty()) {
         ZLog::ErrorV(">>> Can't Get BundleID or BundleExecute or Info.plist SHASum in Info.plist! %s\n",
                      strFolder.c_str());
