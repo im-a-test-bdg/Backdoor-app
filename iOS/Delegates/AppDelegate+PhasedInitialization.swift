@@ -25,7 +25,7 @@ extension AppDelegate {
     func setupPhaseTwo() {
         Debug.shared.log(message: "Starting phase 2 initialization (medium-weight components)", type: .info)
         
-        // Initialize image pipeline
+        // Initialize image pipeline (method name kept as in original codebase)
         imagePipline()
         
         // Set up essential background tasks
@@ -53,47 +53,50 @@ extension AppDelegate {
         backgroundQueue.async { [weak self] in
             guard let self = self else { return }
             
+            // Store AI settings in local variables to avoid redundant checks
+            let aiLearningEnabled = UserDefaults.standard.bool(forKey: "AILearningEnabled")
+            let aiPromptShown = UserDefaults.standard.bool(forKey: "AIPromptShown")
+            
             // Check if user has opted in to AI
-            if UserDefaults.standard.bool(forKey: "AILearningEnabled") {
+            if aiLearningEnabled {
                 // Initialize AI in background thread with delay to ensure UI stability
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0) {
+                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    guard let self = self else { return }
                     self.initializeAILearning()
                 }
-            } else if !UserDefaults.standard.bool(forKey: "AIPromptShown") {
+            } else if !aiPromptShown {
                 // First time - ask for user consent
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
                     self.promptForAIInitializationSafely()
                 }
             }
             
             // Setup AI integration if enabled (but only after a delay)
-            if UserDefaults.standard.bool(forKey: "AILearningEnabled") {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            if aiLearningEnabled {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    guard let self = self else { return }
                     AppContextManager.shared.setupAIIntegration()
                 }
             }
         }
     }
     
-    /// Overridden method with crash protection - replace the original implementation
+    /// Method with phased initialization for crash protection
     func initializeComponentsWithCrashProtection() {
         Debug.shared.log(message: "Initializing components with crash protection", type: .info)
         
-        do {
-            // Phase 1 - safe to run immediately
-            setupPhaseOne()
-            
-            // Phase 2 - defer slightly
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.setupPhaseTwo()
-            }
-            
-            // Phase 3 - defer significantly
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-                self?.setupPhaseThree()
-            }
-        } catch {
-            Debug.shared.log(message: "Error during initialization: \(error.localizedDescription)", type: .error)
+        // Phase 1 - safe to run immediately
+        setupPhaseOne()
+        
+        // Phase 2 - defer slightly
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.setupPhaseTwo()
+        }
+        
+        // Phase 3 - defer significantly
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.setupPhaseThree()
         }
     }
     

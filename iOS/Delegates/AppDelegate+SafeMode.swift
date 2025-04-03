@@ -99,7 +99,8 @@ extension AppDelegate {
         )
         
         alert.addAction(UIAlertAction(title: "Restart Now", style: .destructive) { _ in
-            exit(0) // Force app to close
+            // Properly terminate the app instead of using exit(0)
+            UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
         })
         
         alert.addAction(UIAlertAction(title: "Later", style: .cancel))
@@ -129,7 +130,7 @@ extension AppDelegate {
     
     /// Initialize secondary components with limited functionality for safe mode
     func initializeSecondaryComponentsInSafeMode() {
-        // Only initialize essential image handling
+        // Only initialize essential image handling (method name kept as in original codebase)
         imagePipline()
         
         // Skip AI integration in safe mode
@@ -138,6 +139,7 @@ extension AppDelegate {
         // Skip floating button in safe mode
         
         // These operations are moved to background to avoid blocking app launch
+        // Using weak self to prevent potential memory leaks
         backgroundQueue.async { [weak self] in
             guard let self = self else { return }
             
@@ -161,7 +163,9 @@ extension AppDelegate {
             guard let self = self else { return }
             
             // Find the top view controller to present alert
-            guard let topVC = self.window?.rootViewController?.topPresentedViewController ?? self.window?.rootViewController else {
+            // Note: using UIApplication.topMostViewController() as a safer alternative 
+            // to the custom topPresentedViewController property
+            guard let topVC = UIApplication.shared.topMostViewController() ?? self.window?.rootViewController else {
                 return
             }
             

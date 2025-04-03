@@ -40,8 +40,11 @@ class SafeModeLauncher {
         
         // Reset counter after successful launch with a delay to ensure stability
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
-            guard self?.launchSuccessMarked == true else { return }
-            UserDefaults.standard.set(0, forKey: self?.launchAttemptsKey ?? "")
+            guard let self = self, self.launchSuccessMarked == true else { return }
+            
+            // Use a constant default to avoid empty string keys if self is nil
+            let key = self.launchAttemptsKey
+            UserDefaults.standard.set(0, forKey: key)
             UserDefaults.standard.synchronize()
             print("✅ App launch marked as successful, counter reset")
         }
@@ -97,7 +100,8 @@ class SafeModeLauncher {
         
         alert.addAction(UIAlertAction(title: "Restart Now", style: .destructive) { [weak self] _ in
             self?.disableSafeMode()
-            exit(0) // Force app to close
+            // Properly terminate the app instead of using exit(0)
+            UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
         })
         
         alert.addAction(UIAlertAction(title: "Later", style: .cancel))

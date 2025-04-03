@@ -75,7 +75,7 @@ final class CoreMLManager {
         }
         
         // Check memory status before attempting to load large model
-        if shouldCheckMemory() && isMemoryConstrainted() {
+        if shouldCheckMemory() && isMemoryConstrained() {
             Debug.shared.log(message: "Memory pressure detected - deferring CoreML model loading", type: .warning)
             notifyUserOfDeferredLoading()
             completion?(false)
@@ -100,7 +100,7 @@ final class CoreMLManager {
     }
     
     /// Check if memory is constrained
-    private func isMemoryConstrainted() -> Bool {
+    private func isMemoryConstrained() -> Bool {
         var info = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
         
@@ -118,9 +118,13 @@ final class CoreMLManager {
             Debug.shared.log(message: "Memory usage: \(Int(memoryUsage * 100))%", type: .info)
             
             return memoryUsage > 0.7 // If using more than 70% of memory
+        } else {
+            // Log error for debugging purposes
+            Debug.shared.log(message: "Failed to get memory info: error \(kerr)", type: .error)
+            
+            // Default to true (memory is constrained) to be cautious when we can't determine
+            return true
         }
-        
-        return false
     }
     
     /// Determine if we should check memory at all (performance optimization)
@@ -146,8 +150,8 @@ final class CoreMLManager {
         hasShownDeferredNotification = true
         
         DispatchQueue.main.async {
-            // Find top view controller
-            if let topVC = UIApplication.shared.windows.first?.rootViewController?.topPresentedViewController {
+            // Find top view controller using the shared extension method
+            if let topVC = UIApplication.shared.topMostViewController() {
                 let alert = UIAlertController(
                     title: "AI Features Delayed",
                     message: "AI features will be available when system resources allow. You can continue using other app features.",
@@ -224,7 +228,8 @@ final class CoreMLManager {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) { [weak self] in
             if self?.isModelLoading == true {
                 // Find appropriate view controller to present on
-                guard let topVC = UIApplication.shared.windows.first?.rootViewController?.topPresentedViewController else {
+                // Using the shared extension method to find top view controller
+                guard let topVC = UIApplication.shared.topMostViewController() else {
                     return
                 }
                 
@@ -260,8 +265,10 @@ final class CoreMLManager {
                     completion?(false)
                 })
                 
-                topVC.present(loadingAlert!, animated: true)
-                loadingAlertPresented = true
+                if let alert = loadingAlert {
+                    topVC.present(alert, animated: true)
+                    loadingAlertPresented = true
+                }
             }
         }
         
@@ -273,9 +280,11 @@ final class CoreMLManager {
             queue: .main) { [weak self] _ in
                 Debug.shared.log(message: "Memory warning during model loading, canceling", type: .warning)
                 
-                // Clean up
+                // Clean up - ensure UI operations happen on main thread
                 if loadingAlertPresented {
-                    loadingAlert?.dismiss(animated: true)
+                    DispatchQueue.main.async {
+                        loadingAlert?.dismiss(animated: true)
+                    }
                 }
                 
                 if let observer = memoryObserver {
