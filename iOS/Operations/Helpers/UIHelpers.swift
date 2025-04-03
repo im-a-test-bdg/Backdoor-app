@@ -96,7 +96,7 @@ class InternalAnimationHelper {
         }
         
         // Add animation
-        let repeatCount: Float = (loopMode == .infinity) ? .infinity : 1
+        // Using animation options directly instead of creating unused repeatCount variable
         UIView.animate(withDuration: 1.5, delay: 0, options: [.autoreverse, .repeat, .curveEaseInOut], animations: {
             imageView.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
         }, completion: nil)
