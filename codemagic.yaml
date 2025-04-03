@@ -1,35 +1,24 @@
 workflows:
-  create-new-release:
-    name: Create New Release
-    instance_type: mac_mini_m1  # Adjust based on available Codemagic instances
+  keep-render-app-alive:
+    name: Keep Render App Alive
+    # Define the environment (similar to runs-on in GitHub Actions)
     environment:
-      vars:
-        SCHEME: "'backdoor (Release)'"
-        CFLAGS: "-Onone"
+      # Codemagic uses predefined machine types; 'mac_mini_m1' is a common choice
+      # You can adjust this based on your needs
+      instance_type: mac_mini_m1
+    # Define triggering conditions
+    triggering:
+      events:
+        # Manual triggering via Codemagic UI
+        - push # This allows manual triggering; Codemagic doesn't have a direct "workflow_dispatch" equivalent
+      schedule:
+        # Run every 5 minutes (same as cron: '*/5 * * * *')
+        - cron: "*/5 * * * *"
     scripts:
-      - name: Checkout
+      - name: Ping application URL
         script: |
-          # Codemagic automatically checks out the repo, no need to git clone
-          cd $CM_BUILD_DIR
-
-      - name: Install Dependencies
-        script: |
-          curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
-          sudo install -m755 ldid_macosx_x86_64 /usr/local/bin/ldid
-          brew install 7zip gnu-sed
-
-      - name: Compile
-        script: |
-          mkdir upload
-          make package SCHEME="$SCHEME" CFLAGS="$CFLAGS"
-          mv packages/* upload/
-
-      - name: Get Version Number
-        script: |
-          VERSION=$( /usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Payload/backdoor.app/Info.plist )
-          echo "export VERSION=$VERSION" >> $CM_ENV
-
-      - name: Setup
-        script: |
-          mv upload/backdoor.ipa upload/backdoor_v${VERSION}.ipa
-          cp upload/backdoor_v${VERSION}.ipa upload/backdoor_v${VERSION}.tipa
+          # Use curl to ping the URL, matching the GitHub Actions step
+          curl -s -o /dev/null -w "%{http_code}" https://database-iupv.onrender.com
+    # Optional: Define artifacts or publishing if needed (not present in the original workflow)
+    artifacts:
+      - "*.log" # Example: Collect logs if any are generated (optional)
