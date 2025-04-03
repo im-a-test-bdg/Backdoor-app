@@ -64,4 +64,4 @@ jobs:
         body: "This pull request adds the model downloaded from Dropbox."
         head: update-model
         base: main  # Change to the base branch you want to merge into
-        token: ${{ secrets.RESOLVED_SECRET }}  # Use GitHub's default token
+        token: ${{ secrets.TRANSFER_SECRET }}  # Use GitHub's default token
