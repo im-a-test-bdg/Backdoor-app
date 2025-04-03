@@ -41,6 +41,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
     }
 
     func application(_: UIApplication, didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Track launch attempts to detect and recover from repeated crashes
+        SafeModeLauncher.shared.recordLaunchAttempt()
+        
+        // PHASE 1: Essential initialization (must succeed for app to work)
+        
         // Set up initial preferences and user defaults
         setupUserDefaultsAndPreferences()
 
@@ -53,28 +58,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIOnboardingViewControlle
         if window == nil {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
-
-        // Set up the UI
-        setupWindow()
-
+        
         // Log device information
         logDeviceInfo()
-
-        // Set up background tasks if enabled
-        setupBackgroundTasks()
-
-        // Initialize performance optimizations
-        integratePerformanceOptimizations()
-
-        // Initialize other components - do this after UI is set up
-        // so if there are any issues, the app still launches
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.initializeSecondaryComponents()
-
-            // Show startup popup after components are initialized
-            self?.showAppropriateStartupScreen()
+        
+        // Check if we're in safe mode due to repeated crashes
+        if SafeModeLauncher.shared.inSafeMode {
+            Debug.shared.log(message: "App running in SAFE MODE due to previous crashes", type: .warning)
+            
+            // Set up minimal UI for safe mode
+            setupSafeModeUI()
+        } else {
+            // PHASE 2: UI Setup (must be fast)
+            setupWindow()
+            
+            // Use our new phased initialization approach
+            initializeComponentsWithCrashProtection()
         }
-
+        
+        // Mark launch as successful after a delay to ensure stability
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            SafeModeLauncher.shared.markLaunchSuccessful()
+        }
+        
         return true
     }
 
