@@ -100,13 +100,13 @@ extension AILearningManager {
             // Create enhanced text classifier with context features
             let modelURL = modelsDirectory.appendingPathComponent("model_\(newVersion).mlmodel")
             
-            // Create data table for CreateML
-            let textInputColumn = MLDataColumn(textInput)
-            let intentOutputColumn = MLDataColumn(intentOutput)
-            
-            // Create dictionary with explicit type to avoid ambiguity
-            let dataDict: [String: MLDataColumn] = ["text": textInputColumn, "label": intentOutputColumn]
-            let dataTable = try MLDataTable(dictionary: dataDict)
+            // Create data table for CreateML - Using the appropriate constructor format
+            let dataTable = try MLDataTable(
+                dictionary: [
+                    "text": textInput,
+                    "label": intentOutput
+                ]
+            )
             
             // Train model with simplified approach
             let textClassifier = try MLTextClassifier(
