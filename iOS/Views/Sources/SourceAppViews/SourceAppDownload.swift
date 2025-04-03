@@ -88,9 +88,8 @@ extension SourceAppViewController {
                 let checksum = CryptoHelper.shared.crc32(of: fileData)
                 Debug.shared.log(message: "Download completed with checksum: \(checksum)", type: .info)
                 
-                // Extract and process the bundle
+                // Extract and process the bundle - use weak self but no guard statement unless needed
                 cell.appDownload?.extractCompressedBundle(packageURL: downloadedURL.path) { [weak self] targetBundle, error in
-                    guard let self = self else { return }
                     
                     // Remove animation when processing is complete
                     DispatchQueue.main.async {

@@ -51,21 +51,29 @@ extension CustomAIService {
             if let appName = parameters["appName"] as? String {
                 return .appSign(appName: appName)
             }
+            // Fall through to generic case if no app name
+            return .unknown
             
         case "navigate", "navigation":
             if let destination = parameters["destination"] as? String {
                 return .appNavigation(destination: destination)
             }
+            // Fall through to generic case if no destination
+            return .unknown
             
         case "add_source", "source":
             if let url = parameters["url"] as? String {
                 return .sourceAdd(url: url)
             }
+            // Fall through to generic case if no URL
+            return .unknown
             
         case "install_app", "install":
             if let appName = parameters["appName"] as? String {
                 return .appInstall(appName: appName)
             }
+            // Fall through to generic case if no app name
+            return .unknown
             
         case "greeting", "hello":
             return .greeting

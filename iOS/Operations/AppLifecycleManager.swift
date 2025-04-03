@@ -474,13 +474,15 @@ final class AppLifecycleManager {
     private func startStateMonitoringTask() {
         var taskId: UIBackgroundTaskIdentifier = .invalid
         
-        taskId = UIApplication.shared.beginBackgroundTask(withName: "StateMonitoring") { [weak self] in
+        // Use captured local variable for task ID to avoid capture-reference cycle
+        taskId = UIApplication.shared.beginBackgroundTask(withName: "StateMonitoring") { [weak self, taskId] in
+            // Use weak self to avoid reference cycle
             guard let self = self else { return }
             
             // Save state before expiration
             self.saveApplicationState()
             
-            // End the task
+            // End the task using the captured taskId
             if taskId != .invalid {
                 UIApplication.shared.endBackgroundTask(taskId)
             }
