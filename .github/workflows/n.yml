@@ -22,7 +22,6 @@ jobs:
         start_time=$(date +%s)
         mkdir -p model
         curl -L -o model/coreml_model.mlmodel \
-          -H "Authorization: Bearer ${{ secrets.WORKFLOW_SECRET }}" \
           "https://www.dropbox.com/scl/fi/2xarhyii46tr9amkqh764/coreml_model.mlmodel?rlkey=j3cxmpjhxj8bbwzw11j1hy54c&st=zuyjx83u&dl=1"
         
         # Verify the file exists and is not empty
@@ -34,8 +33,6 @@ jobs:
         end_time=$(date +%s)
         duration=$((end_time - start_time))
         echo "Model download time: $duration seconds"
-      env:
-        WORKFLOW_SECRET: ${{ secrets.WORKFLOW_SECRET }}
 
     - name: Move model to repository and create new branch
       run: |
@@ -55,15 +52,12 @@ jobs:
         # Commit changes
         git commit -m "Add coreml_model.mlmodel using Git LFS"
         
-        # Push the branch to GitHub using WORKFLOW_SECRET as a token
-        git push --set-upstream origin update-model -f \
-          --repo https://x-access-token:${{ secrets.WORKFLOW_SECRET }}@github.com/${{ github.repository }}.git
+        # Push the branch to GitHub
+        git push --set-upstream origin update-model -f
         
         end_time=$(date +%s)
         duration=$((end_time - start_time))
         echo "Move and commit time: $duration seconds"
-      env:
-        WORKFLOW_SECRET: ${{ secrets.WORKFLOW_SECRET }}
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
